@@ -280,9 +280,14 @@ jQuery(document).ready(function ($) {
             console.log('Response %o', response);
 
             $.each(response.routes, function (index) {
-                var help = response.routes[index];
-                var helpGroup = safeText(help.group) || 'wp',
-                    group = $list.find('.group-' + helpGroup);
+                var help = response.routes[index],
+                    helpGroup, group;
+                if (response.routes[index].namespace && index !== '/' + response.routes[index].namespace) {
+                    var re = new RegExp('/' + response.routes[index].namespace + '/([a-zA-Z-_]+).*', 'g');
+                    helpGroup = index.replace(re, '$1');
+                }
+                helpGroup = helpGroup || 'wp';
+                group = $list.find('.group-' + helpGroup);
                 if (!group.is('li')) group = $('<li><strong>' + helpGroup + '</strong><ul></ul></li>').addClass('group-' + helpGroup).appendTo($list);
                 help.supports = help.supports || [];
                 help.methods = help.methods || [];
@@ -359,6 +364,10 @@ jQuery(document).ready(function ($) {
             $fields.find('.raw-toggle').hide().addClass('on').trigger('toggle', [true]);
             $reference.find('.selected').removeClass('selected');
         });
+
+        var getGroup = function () {
+
+        }
 
         // replace a string with placeholders with the given values
         var interpolate = function (string, values) {
