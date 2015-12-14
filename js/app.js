@@ -83,7 +83,7 @@ jQuery(document).ready(function ($) {
                 $li.addClass('closed').append($disclosure);
             });
             return object;
-        }
+        };
 
         // outputs a single line of JSON
         var rawResponse = function (object, formatter) {
@@ -97,7 +97,7 @@ jQuery(document).ready(function ($) {
             if (!object || object.constructor == Array && object.length == 0) return;
             if ('object' === typeof(object)) {
                 node = $("<ul></ul>").addClass('object');
-                li;
+                //li;
                 for (field in object) {
                     li = $("<li>");
                     li.append($("<span></span>").addClass('key').text(field)).append(' ');
@@ -121,7 +121,7 @@ jQuery(document).ready(function ($) {
                 }
             } else {
                 if (object === undefined) return $("<span>undefined</span>");
-                ;
+
                 var str = object.toString(), matches;
                 node = $('<span>').addClass('value').addClass(typeof(object)).text(str)
                 if (matches = str.match("^" + config.api_url + "(/.*)")) { // IF it's an API URL make it clickable
@@ -135,7 +135,7 @@ jQuery(document).ready(function ($) {
                 }
             }
             return node;
-        }
+        };
 
         // the path build
         var $pathField = $("[name=path]"),
@@ -159,10 +159,10 @@ jQuery(document).ready(function ($) {
                         var $dl = $('<dl>').appendTo($node);
                         $.each(help.description, function (key, val) {
                             $dl.append("<dt>" + safeText(key) + "</dt><dd>" + safeText(val) + "</dd>")
-                        })
+                        });
                         break;
                     default:
-                        $node.append("<p><em>Not available</em></p>")
+                        $node.append("<p><em>Not available</em></p>");
                         break;
                 }
             },
@@ -170,7 +170,7 @@ jQuery(document).ready(function ($) {
                 var $builder = $("<div>").addClass('object-builder'), values = {}, keys = [], help = {};
                 $builder.setObject = function (object, helpValues) {
                     $builder.html('');
-                    keys = []
+                    keys = [];
                     help = helpValues;
                     $.each(object, function (key, value) {
                         if (keys.indexOf(key) == -1) keys.push(key);
@@ -215,13 +215,13 @@ jQuery(document).ready(function ($) {
                                     $helpBubble.hide();
                                 }
                             )
-                        )
+                        );
 
                     }); // each
-                }
+                };
                 var empty = function (item) {
                     return !item || item == "";
-                }
+                };
                 $builder.getObject = function () {
                     var output = {};
                     $.each(keys, function (index, key) {
@@ -230,7 +230,7 @@ jQuery(document).ready(function ($) {
                         }
                     });
                     return output;
-                }
+                };
                 return $builder;
             },
             $pathBuilder = objectBuilder(),
@@ -277,24 +277,27 @@ jQuery(document).ready(function ($) {
             }
 
             $reference.find('.throbber').remove();
+            console.log('Response %o', response);
+
             $.each(response.routes, function (index) {
                 var help = response.routes[index];
-                var helpGroup = safeText(help.group),
+                var helpGroup = safeText(help.group) || 'wp',
                     group = $list.find('.group-' + helpGroup);
                 if (!group.is('li')) group = $('<li><strong>' + helpGroup + '</strong><ul></ul></li>').addClass('group-' + helpGroup).appendTo($list);
                 help.supports = help.supports || [];
-                $.each(help.supports, function (method_index, method) {
+                help.methods = help.methods || [];
+                $.each(help.methods, function (method_index, method) {
                     if (method === 'HEAD') {
                         return;
                     }
 
                     group.find('ul').append(
                         $('<li>')
-                            .append($('<span class="path-details"></span>').text(method + " " + index))
+                            .append($('<span class="path-details"></span>').text(method + " " + formatKey(index)))
                             // .append($('<span class="description"></span>').text(help.description))
                             .click(function (e) {
                                 var $target = $(e.target),
-                                    $li = $target.is('li') ? $target : $target.parents('li').first()
+                                    $li = $target.is('li') ? $target : $target.parents('li').first();
 
                                 if ($li.hasClass('selected')) return;
                                 $reference.find('li.selected').removeClass('selected');
@@ -329,7 +332,7 @@ jQuery(document).ready(function ($) {
                     )
                 });
             });
-        })
+        });
 
 
         // create a toggle so the object_builder can be replaced with a raw input field
@@ -338,7 +341,7 @@ jQuery(document).ready(function ($) {
                 $toggle = $('<span class="raw-toggle">Raw</span>')
                     .click(function () {
                         $(this).toggleClass('on').trigger('toggle', [$(this).hasClass('on')])
-                    })
+                    });
             $field.append($toggle);
             $toggle
                 .bind('toggle', function (e, on) {
@@ -355,16 +358,21 @@ jQuery(document).ready(function ($) {
             $fields.show();
             $fields.find('.raw-toggle').hide().addClass('on').trigger('toggle', [true]);
             $reference.find('.selected').removeClass('selected');
-        })
+        });
 
         // replace a string with placeholders with the given values
         var interpolate = function (string, values) {
             var string = string.slice();
             $.each(values, function (key, value) {
                 string = string.replace(key, value)
-            })
+            });
             return string;
-        }
+        };
+
+        var formatKey = function (string) {
+            var regex = /\(\?P<(\w+?)>.*?\)/g;
+            return string.replace(regex, '<$1>');
+        };
 
         // User has submitted the form, build the request and send it
         $('form[action="#request"]').submit(function (e) {
@@ -372,7 +380,7 @@ jQuery(document).ready(function ($) {
             // let's build a request;
 
             var req = {
-                path: $(this.path).parent().siblings().is('.raw-toggle.on') ? this.path.value : interpolate(this.path.value, $pathBuilder.getObject()),
+                path: $(this.path).parent().siblings().is('.raw-toggle.on') ? this.path.value : interpolate(formatKey(this.path.value), $pathBuilder.getObject()),
                 method: this.method.value,
                 data: $(this.body).parent().siblings().is('.raw-toggle.on') ? this.body.value : $bodyBuilder.getObject(),
 
